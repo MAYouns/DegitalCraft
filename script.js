@@ -36,39 +36,53 @@ window.addEventListener('scroll', () => {
 
 // Mobile Navigation
 const initMobileNav = () => {
-    const mobileMenuButton = document.createElement('button');
-    mobileMenuButton.className = 'mobile-menu-button';
-    mobileMenuButton.setAttribute('aria-label', 'Toggle mobile menu');
-    mobileMenuButton.innerHTML = `
-        <span></span>
-        <span></span>
-        <span></span>
-    `;
-
+    const mobileMenuButton = document.querySelector('.mobile-menu-button');
     const nav = document.querySelector('nav');
-    nav.insertBefore(mobileMenuButton, nav.firstChild);
-
     const navLinks = document.querySelector('.nav-links');
 
+    if (!mobileMenuButton || !navLinks) return;
+
     // Toggle menu when button is clicked
-    mobileMenuButton.addEventListener('click', () => {
-        navLinks.classList.toggle('show');
-        mobileMenuButton.classList.toggle('active');
+    mobileMenuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navLinks.classList.toggle('hidden');
+        navLinks.classList.toggle('flex');
+        
+        const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+        mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+        
+        // change icon
+        if (!isExpanded) {
+            mobileMenuButton.innerHTML = '<svg width="28" height="28" fill="none" class="text-text-dark pointer-events-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>';
+            // prevent body scroll
+            document.body.style.overflow = 'hidden';
+        } else {
+            mobileMenuButton.innerHTML = '<svg width="28" height="28" fill="none" class="text-text-dark pointer-events-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>';
+            document.body.style.overflow = '';
+        }
     });
 
     // Close menu when clicking outside
     document.addEventListener('click', (e) => {
-        if (!nav.contains(e.target) && navLinks.classList.contains('show')) {
-            navLinks.classList.remove('show');
-            mobileMenuButton.classList.remove('active');
+        if (!nav.contains(e.target) && !navLinks.classList.contains('hidden') && window.innerWidth < 768) {
+            navLinks.classList.add('hidden');
+            navLinks.classList.remove('flex');
+            mobileMenuButton.setAttribute('aria-expanded', 'false');
+            mobileMenuButton.innerHTML = '<svg width="28" height="28" fill="none" class="text-text-dark pointer-events-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>';
+            document.body.style.overflow = '';
         }
     });
 
     // Close menu when clicking on a link
     navLinks.querySelectorAll('a').forEach(link => {
         link.addEventListener('click', () => {
-            navLinks.classList.remove('show');
-            mobileMenuButton.classList.remove('active');
+            if (window.innerWidth < 768) {
+                navLinks.classList.add('hidden');
+                navLinks.classList.remove('flex');
+                mobileMenuButton.setAttribute('aria-expanded', 'false');
+                mobileMenuButton.innerHTML = '<svg width="28" height="28" fill="none" class="text-text-dark pointer-events-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>';
+                document.body.style.overflow = '';
+            }
         });
     });
 };
@@ -76,56 +90,20 @@ const initMobileNav = () => {
 // Initialize mobile navigation
 document.addEventListener('DOMContentLoaded', initMobileNav);
 
-// Custom smooth scroll with animation curve
-function smoothScrollTo(targetY, duration = 700) {
-    const startY = window.scrollY;
-    const changeY = targetY - startY;
-    const startTime = performance.now();
-    function easeInOutCubic(t) {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
-    function animateScroll(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const ease = easeInOutCubic(progress);
-        window.scrollTo(0, startY + changeY * ease);
-        if (progress < 1) {
-            requestAnimationFrame(animateScroll);
-        }
-    }
-    requestAnimationFrame(animateScroll);
-}
-
 // Enhanced Back to Top Button
 const backToTopBtn = document.getElementById('backToTop');
-window.addEventListener('scroll', () => {
-    if (window.scrollY > 300) {
-        backToTopBtn.classList.add('show');
-    } else {
-        backToTopBtn.classList.remove('show');
-    }
-});
-backToTopBtn.addEventListener('click', () => {
-    smoothScrollTo(0);
-});
-
-// Enhanced smooth scrolling for navigation links
-function handleAnchorClick(e) {
-    const href = this.getAttribute('href');
-    if (href && href.startsWith('#')) {
-        const target = document.querySelector(href);
-        if (target) {
-            e.preventDefault();
-            const rect = target.getBoundingClientRect();
-            const scrollTop = window.scrollY + rect.top - 60; // offset for fixed header
-            smoothScrollTo(scrollTop);
+if (backToTopBtn) {
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            backToTopBtn.classList.add('show');
+        } else {
+            backToTopBtn.classList.remove('show');
         }
-    }
+    });
+    backToTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 }
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.removeEventListener('click', handleAnchorClick); // prevent duplicate
-    anchor.addEventListener('click', handleAnchorClick);
-});
 
 // Testimonials Carousel
 (function () {
@@ -177,34 +155,34 @@ window.addEventListener('scroll', function () {
 // Theme Switcher
 const themeColors = {
     default: {
-        '--primary-color': '#4f46e5',
-        '--primary-dark': '#4338ca',
-        '--secondary-color': '#0ea5e9',
-        '--accent-color': '#f59e0b',
+        '--color-primary': '#4f46e5',
+        '--color-primary-dark': '#4338ca',
+        '--color-secondary': '#0ea5e9',
+        '--color-accent': '#f59e0b',
     },
     green: {
-        '--primary-color': '#10b981',
-        '--primary-dark': '#059669',
-        '--secondary-color': '#22d3ee',
-        '--accent-color': '#f59e0b',
+        '--color-primary': '#10b981',
+        '--color-primary-dark': '#059669',
+        '--color-secondary': '#22d3ee',
+        '--color-accent': '#f59e0b',
     },
     red: {
-        '--primary-color': '#ef4444',
-        '--primary-dark': '#b91c1c',
-        '--secondary-color': '#f87171',
-        '--accent-color': '#f59e0b',
+        '--color-primary': '#ef4444',
+        '--color-primary-dark': '#b91c1c',
+        '--color-secondary': '#f87171',
+        '--color-accent': '#f59e0b',
     },
     purple: {
-        '--primary-color': '#a21caf',
-        '--primary-dark': '#701a75',
-        '--secondary-color': '#818cf8',
-        '--accent-color': '#f59e0b',
+        '--color-primary': '#a21caf',
+        '--color-primary-dark': '#701a75',
+        '--color-secondary': '#818cf8',
+        '--color-accent': '#f59e0b',
     },
     orange: {
-        '--primary-color': '#f59e0b',
-        '--primary-dark': '#b45309',
-        '--secondary-color': '#fbbf24',
-        '--accent-color': '#4f46e5',
+        '--color-primary': '#f59e0b',
+        '--color-primary-dark': '#b45309',
+        '--color-secondary': '#fbbf24',
+        '--color-accent': '#4f46e5',
     }
 };
 function setTheme(theme) {
@@ -257,6 +235,8 @@ if (dropdown && dropdownToggle && dropdownMenu) {
 // Modern, Fast Chatbot Implementation
 document.addEventListener('DOMContentLoaded', function () {
     const chatbot = document.getElementById('chatbot');
+    const chatbotWindow = document.querySelector('.chatbot-window');
+    const closeChatBtn = document.querySelector('.close-chat');
     const chatToggle = document.querySelector('.chatbot-toggle');
     const chatMessages = document.getElementById('chatMessages');
     const chatForm = document.getElementById('chatForm');
@@ -324,6 +304,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Toggle chatbot visibility
     chatToggle.addEventListener('click', function () {
         chatbot.classList.toggle('active');
+        if (chatbotWindow) chatbotWindow.classList.toggle('active');
         const isActive = chatbot.classList.contains('active');
         chatToggle.setAttribute('aria-expanded', isActive);
 
@@ -332,6 +313,14 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(() => userInput.focus(), 300);
         }
     });
+
+    if (closeChatBtn) {
+        closeChatBtn.addEventListener('click', function() {
+            chatbot.classList.remove('active');
+            if (chatbotWindow) chatbotWindow.classList.remove('active');
+            chatToggle.setAttribute('aria-expanded', 'false');
+        });
+    }
 
     // Handle form submission
     chatForm.addEventListener('submit', function (e) {
@@ -424,12 +413,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // Add message to chat
     function addMessage(type, content) {
         const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${type}-message`;
+        const alignClass = type === 'user' ? 'self-end' : 'self-start';
+        messageDiv.className = `message ${type}-message flex max-w-[85%] animate-[messageSlideIn_0.3s_ease-out_forwards] ${alignClass} flex-col`;
 
         const messageContent = document.createElement('div');
-        messageContent.className = 'message-content';
+        if (type === 'user') {
+            messageContent.className = 'message-content p-[1rem_1.25rem] rounded-[1rem] text-[0.95rem] leading-[1.5] shadow-[0_2px_8px_rgba(0,0,0,0.05)] relative bg-primary text-white rounded-br-[0.25rem]';
+        } else {
+            messageContent.className = 'message-content p-[1rem_1.25rem] rounded-[1rem] text-[0.95rem] leading-[1.5] shadow-[0_2px_8px_rgba(0,0,0,0.05)] relative bg-white text-text-dark rounded-bl-[0.25rem] border border-black/[0.03]';
+        }
 
         const messagePara = document.createElement('p');
+        messagePara.className = 'm-0';
         messagePara.textContent = content;
 
         messageContent.appendChild(messagePara);
@@ -441,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function () {
             now.getMinutes().toString().padStart(2, '0');
 
         const timeSpan = document.createElement('span');
-        timeSpan.className = 'message-time';
+        timeSpan.className = `message-time text-[0.7rem] opacity-70 mt-1 px-1 ${type === 'user' ? 'self-end' : 'self-start'}`;
         timeSpan.textContent = timeString;
         messageDiv.appendChild(timeSpan);
 
@@ -457,12 +452,12 @@ document.addEventListener('DOMContentLoaded', function () {
         removeSuggestionButtons();
 
         const suggestionsDiv = document.createElement('div');
-        suggestionsDiv.className = 'suggestion-buttons';
+        suggestionsDiv.className = 'suggestion-buttons flex flex-wrap gap-[0.5rem] mt-[0.5rem] animate-[fadeIn_0.5s_ease-out_0.3s_both]';
 
         suggestions.forEach(suggestion => {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'suggestion-btn';
+            button.className = 'suggestion-btn bg-primary/10 text-primary border border-primary/20 p-[0.5rem_1rem] rounded-[2rem] text-[0.85rem] font-medium cursor-pointer transition-all duration-200 ease-in-out whitespace-nowrap hover:bg-primary hover:text-white hover:-translate-y-[2px] hover:shadow-[0_4px_10px_rgba(79,70,229,0.2)]';
             button.dataset.query = suggestion.query;
             button.textContent = suggestion.text;
             suggestionsDiv.appendChild(button);
@@ -481,14 +476,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // Show typing indicator
     function addTypingIndicator() {
         const typingDiv = document.createElement('div');
-        typingDiv.className = 'message bot-message typing-indicator';
+        typingDiv.className = 'message bot-message typing-indicator flex max-w-[85%] self-start flex-col';
 
         const typingContent = document.createElement('div');
-        typingContent.className = 'message-content';
+        typingContent.className = 'message-content p-[1rem_1.25rem] rounded-[1rem] text-[0.95rem] leading-[1.5] shadow-[0_2px_8px_rgba(0,0,0,0.05)] relative bg-white text-text-dark rounded-bl-[0.25rem] border border-black/[0.03]';
 
         const dots = document.createElement('div');
-        dots.className = 'typing-dots';
-        dots.innerHTML = '<span></span><span></span><span></span>';
+        dots.className = 'typing-dots flex gap-[5px] items-center h-[20px]';
+        dots.innerHTML = '<span class="w-[8px] h-[8px] rounded-full bg-[#cbd5e1] animate-[bounce_1s_infinite]"></span><span class="w-[8px] h-[8px] rounded-full bg-[#cbd5e1] animate-[bounce_1s_infinite]" style="animation-delay: 0.2s"></span><span class="w-[8px] h-[8px] rounded-full bg-[#cbd5e1] animate-[bounce_1s_infinite]" style="animation-delay: 0.4s"></span>';
 
         typingContent.appendChild(dots);
         typingDiv.appendChild(typingContent);
