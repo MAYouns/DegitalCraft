@@ -528,4 +528,3 @@ if (themeSwitcherFloating && themeSwitcherToggle) {
     });
 }
 
-// Rest of your existing JavaScript code...
